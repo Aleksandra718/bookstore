@@ -88,7 +88,7 @@ class CatalogView(TemplateView):
             else:
                 return TemplateResponse(request, 'main/catalog.html', context)
         
-        # Для обычных запросов возвращаем полную страницу
+
         return TemplateResponse(request, self.template_name, context)
 
 
@@ -111,6 +111,8 @@ class ProductDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(**kwargs)
+        
         if request.headers.get('HX-Request'):
             return TemplateResponse(request, 'main/product_detail.html', context)
-        return TemplateResponse(request, self.template_name, context)
+        else:
+            return TemplateResponse(request, self.template_name, context)
