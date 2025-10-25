@@ -430,7 +430,7 @@
             }
     
             function openCart() {
-                htmx.ajax('GET', '{%  %}', {
+                htmx.ajax('GET', {
                     target: '#cart-container',
                     swap: 'innerHTML'
                 });
