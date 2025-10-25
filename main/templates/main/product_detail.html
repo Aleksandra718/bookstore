@@ -1,0 +1,409 @@
+<main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <div class="mb-8">
+        <nav class="text-sm text-gray-600">
+            <a href="{% url 'main:index' %}" 
+               hx-get="{% url 'main:index' %}" 
+               hx-target="#main-content" 
+               hx-push-url="true"
+               class="hover:text-gray-900">HOME</a>
+            <span class="mx-2">/</span>
+            <a href="{% url 'main:catalog' product.category.slug %}" 
+               hx-get="{% url 'main:catalog' product.category.slug %}" 
+               hx-target="#main-content" 
+               hx-push-url="true"
+               class="hover:text-gray-900">{{ product.category.name|upper }}</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-900">{{ product.name|upper }}</span>
+        </nav>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+        <!-- Book Cover -->
+        <div class="space-y-4">
+            <!-- Main Cover -->
+            <div class="aspect-[3/4] overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 rounded-lg shadow-lg">
+                {% if product.main_image %}
+                    <img src="{{ product.main_image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover">
+                {% else %}
+                    <div class="w-full h-full flex flex-col items-center justify-center text-center p-8">
+                        <span class="text-6xl mb-4">📚</span>
+                        <p class="text-gray-500 text-lg">No Cover Image</p>
+                        <p class="text-gray-400 text-sm mt-2">{{ product.name }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Additional Images -->
+            {% if product.images.all %}
+            <div class="grid grid-cols-3 gap-3">
+                {% for image in product.images.all %}
+                <div class="aspect-[3/4] overflow-hidden bg-gray-100 rounded-lg cursor-pointer hover:opacity-80 transition-opacity">
+                    <img src="{{ image.image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="w-full h-full object-cover"
+                         onclick="changeMainImage(this.src)">
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Book Info -->
+        <div class="space-y-6">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-2 leading-tight">
+                    {{ product.name }}
+                </h1>
+                <p class="text-lg text-blue-600 font-medium mb-3">by {{ product.author|default:"Unknown Author" }}</p>
+                <div class="flex items-center space-x-4 mb-4">
+                    <div class="flex items-center">
+                        <div class="flex text-yellow-400">
+                            ★★★★★
+                        </div>
+                        <span class="ml-2 text-sm text-gray-600">4.5 (128 reviews)</span>
+                    </div>
+                    <span class="text-sm text-gray-500">•</span>
+                    <span class="text-sm text-gray-600">{{ product.pages|default:"300" }} pages</span>
+                </div>
+                <p class="text-3xl font-bold text-gray-900">${{ product.price }}</p>
+            </div>
+
+            <!-- Book Format Selection -->
+            {% if product.book_formats.all %}
+            <div>
+                <h3 class="text-sm font-medium text-gray-900 mb-3">FORMAT</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    {% for format in product.book_formats.all %}
+                    <div class="format-option">
+                        <input type="radio" 
+                               name="format" 
+                               class="format-radio hidden"
+                               id="format-{{ format.id }}"
+                               value="{{ format.id }}"
+                               data-format="{{ format.format.name }}"
+                               {% if format.stock == 0 %}disabled{% endif %}
+                               {% if forloop.first and format.stock > 0 %}checked{% endif %}>
+                        <label for="format-{{ format.id }}"
+                               class="block border-2 border-gray-200 py-3 px-4 text-sm font-medium text-center cursor-pointer hover:border-blue-500 transition-colors rounded-lg {% if format.stock == 0 %}opacity-50 cursor-not-allowed{% endif %}">
+                            <div class="font-semibold">{{ format.format.name }}</div>
+                            <div class="text-xs text-gray-500 mt-1">
+                                {% if format.stock > 0 %}
+                                    In Stock
+                                {% else %}
+                                    Out of Stock
+                                {% endif %}
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-sm text-yellow-800">No formats currently available</p>
+            </div>
+            {% endif %}
+
+            <!-- Add to Cart & Wishlist -->
+            <div class="space-y-4">
+                <button id="add-to-cart-btn" 
+                        class="w-full bg-blue-600 text-white py-4 px-6 text-base font-semibold hover:bg-blue-700 transition-colors rounded-lg shadow-md"
+                        onclick="addToCart()"
+                        {% if not product.book_formats.all %}disabled{% endif %}>
+                    <span class="flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        ADD TO CART
+                    </span>
+                </button>
+                
+                <button class="w-full border-2 border-gray-300 py-4 px-6 text-base font-semibold hover:border-gray-400 transition-colors rounded-lg flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                    </svg>
+                    ADD TO WISHLIST
+                </button>
+            </div>
+
+            <!-- Book Details -->
+            <div class="bg-gray-50 rounded-lg p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-600">Publisher</span>
+                    <span class="text-sm text-gray-900">{{ product.publisher|default:"Not specified" }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-600">ISBN</span>
+                    <span class="text-sm text-gray-900">{{ product.isbn|default:"Not available" }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-600">Publication Date</span>
+                    <span class="text-sm text-gray-900">{{ product.publication_date|date:"F d, Y"|default:"Not specified" }}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-gray-600">Language</span>
+                    <span class="text-sm text-gray-900">{{ product.language|default:"English" }}</span>
+                </div>
+            </div>
+
+            <!-- Book Description -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">About This Book</h3>
+                <div class="prose prose-gray max-w-none">
+                    <p class="text-gray-700 leading-relaxed">{{ product.description|linebreaks }}</p>
+                </div>
+            </div>
+
+            <!-- Book Features -->
+            <div class="border-t border-gray-200 pt-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Book Features</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-sm text-gray-700">Free shipping available</span>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-sm text-gray-700">30-day return policy</span>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-sm text-gray-700">Gift wrapping available</span>
+                    </div>
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        <span class="text-sm text-gray-700">Authentic edition</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Related Books -->
+    {% if related_products %}
+    <div class="mt-16 border-t border-gray-200 pt-16">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8">You Might Also Like</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for related_product in related_products %}
+            <div class="book-card group cursor-pointer bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300" 
+                 hx-get="{% url 'main:product_detail' related_product.slug %}"
+                 hx-target="#main-content"
+                 hx-push-url="true">
+                <div class="aspect-[3/4] overflow-hidden bg-gray-100 rounded-t-lg">
+                    {% if related_product.main_image %}
+                        <img src="{{ related_product.main_image.url }}" 
+                             alt="{{ related_product.name }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+                            <span class="text-4xl">📚</span>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">{{ related_product.name }}</h3>
+                    <p class="text-sm text-gray-600 mb-2">{{ related_product.author|default:"Unknown Author" }}</p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold text-gray-900">${{ related_product.price }}</span>
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">{{ related_product.category.name }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</main>
+
+<style>
+    .format-radio:checked + label {
+        background-color: #2563eb !important;
+        color: white !important;
+        border-color: #2563eb !important;
+    }
+    .format-radio:disabled + label {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .format-radio:checked + label .text-gray-500 {
+        color: rgba(255, 255, 255, 0.8) !important;
+    }
+</style>
+
+<script>
+    let selectedFormat = null;
+    let selectedFormatId = null;
+
+    function changeMainImage(src) {
+        const mainImg = document.querySelector('.aspect-\\[3\\/4\\] img');
+        if (mainImg) {
+            mainImg.src = src;
+        }
+    }
+
+    function updateSelectedFormat() {
+        const formatRadios = document.querySelectorAll('.format-radio');
+        const checkedRadio = Array.from(formatRadios).find(radio => radio.checked && !radio.disabled);
+        if (checkedRadio) {
+            selectedFormat = checkedRadio.dataset.format;
+            selectedFormatId = checkedRadio.value;
+            console.log('Updated Selected Format:', selectedFormat, 'ID:', selectedFormatId);
+        } else {
+            selectedFormat = null;
+            selectedFormatId = null;
+            console.log('No valid format selected');
+        }
+    }
+
+    function addToCart() {
+        const productSlug = '{{ product.slug }}';
+        console.log('Product Slug:', productSlug);
+        
+        // Update selected format before sending
+        updateSelectedFormat();
+        console.log('Selected Format ID:', selectedFormatId);
+
+        if (!selectedFormatId) {
+            showNotification('Please select a book format');
+            return;
+        }
+
+        let formData = new FormData();
+        formData.append('format_id', selectedFormatId);
+        formData.append('quantity', '1');
+        fetch(`{% url 'cart:add_to_cart' 'PLACEHOLDER' %}`.replace('PLACEHOLDER', productSlug), {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            console.log('Response Status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response Data:', data);
+            if (data.error) {
+                showNotification(data.error);
+            } else {
+                updateHeaderCartCount(data.total_items);
+                showNotification(data.message);
+                htmx.ajax('GET', '{% url "cart:cart_modal" %}', {
+                    target: '#cart-container',
+                    swap: 'innerHTML'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error adding to cart');
+        });
+    }
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-20 right-4 bg-blue-600 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 10);
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    function initializeFormatRadios() {
+        const formatRadios = document.querySelectorAll('.format-radio');
+        const addToCartBtn = document.getElementById('add-to-cart-btn');
+        console.log('Format Radios Found:', formatRadios.length);
+
+        if (formatRadios.length === 0) {
+            console.log('No format radios available');
+            addToCartBtn.disabled = true;
+            addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            showNotification('No formats available');
+            return;
+        }
+
+        const availableRadios = Array.from(formatRadios).filter(radio => !radio.disabled);
+        console.log('Available Format Radios:', availableRadios.length);
+
+        if (availableRadios.length === 0) {
+            console.log('All formats are out of stock');
+            addToCartBtn.disabled = true;
+            addToCartBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            showNotification('All formats are out of stock');
+            return;
+        }
+
+        // Ensure at least one valid radio is checked
+        let checkedRadio = Array.from(formatRadios).find(radio => radio.checked && !radio.disabled);
+        if (!checkedRadio && availableRadios.length > 0) {
+            availableRadios[0].checked = true;
+            checkedRadio = availableRadios[0];
+            console.log('Auto-checked first available radio:', checkedRadio.dataset.format, 'ID:', checkedRadio.value);
+        }
+
+        // Update selected format
+        updateSelectedFormat();
+
+        // Add event listeners
+        formatRadios.forEach(radio => {
+            radio.addEventListener('change', function(e) {
+                if (this.disabled) {
+                    console.log('Changed disabled radio:', this.dataset.format);
+                    return;
+                }
+                console.log('Radio Changed - Selected Format:', this.dataset.format, 'ID:', this.value);
+                updateSelectedFormat();
+                addToCartBtn.disabled = false;
+                addToCartBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initializeFormatRadios);
+    document.addEventListener('htmx:afterSwap', initializeFormatRadios);
+
+    // Book card hover effects
+    const bookCards = document.querySelectorAll('.book-card');
+    bookCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-4px)';
+        });
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+        });
+    });
+</script>
