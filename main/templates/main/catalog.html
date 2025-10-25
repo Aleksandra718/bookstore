@@ -1,208 +1,90 @@
-{% load static %}
-
-<div class="max-w-7xl mx-auto">
-    <!-- Заголовок и управление -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">
-                {% if current_category %}
-                    {% for category in categories %}
-                        {% if category.slug == current_category %}
-                            {{ category.name }}
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                    Все товары
-                {% endif %}
-            </h1>
-            <p class="text-gray-600 mt-2">
-                Найдено товаров: {{ products.count }}
-            </p>
-        </div>
-        
-        <div class="flex flex-wrap gap-2">
-            <!-- Кнопка фильтров -->
-            <button class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
-                    hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}?show_filters=true"
-                    hx-target="#filter-modal > div">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z"></path>
-                </svg>
-                Фильтры
-            </button>
-
-            <!-- Сброс фильтров -->
-            {% if filter_params.min_price or filter_params.max_price or search_query %}
-            <a href="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-               class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 flex items-center gap-2"
-               hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-               hx-target="#main-content"
-               hx-push-url="true">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                </svg>
-                Сбросить
-            </a>
+% block content %}
+<main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb and Filters -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            {% if current_category %}
+                {{ current_category|upper }} > NEW ARRIVALS
+            {% else %}
+                ALL PRODUCTS
             {% endif %}
-        </div>
+        </h2>
+        <button class="bg-black text-white px-4 py-2 text-sm font-medium uppercase hover:bg-gray-800 transition-colors w-full sm:w-auto" 
+                hx-get="{% if current_category %}{% url 'main:catalog' current_category %}{% else %}{% url 'main:catalog_all' %}{% endif %}?show_filters=true&color={{ filter_params.color|urlencode }}&min_price={{ filter_params.min_price|urlencode }}&max_price={{ filter_params.max_price|urlencode }}&size={{ filter_params.size|urlencode }}" 
+                hx-target="#filter-modal-content"
+                hx-swap="innerHTML"
+                hx-on::after-request="document.getElementById('filter-modal').classList.remove('hidden')">
+            FILTERS
+        </button>
     </div>
 
-    <!-- Активные фильтры -->
-    {% if filter_params.min_price or filter_params.max_price or search_query %}
-    <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-        <h3 class="font-semibold text-blue-900 mb-2">Активные фильтры:</h3>
-        <div class="flex flex-wrap gap-2">
-            {% if search_query %}
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">
-                Поиск: "{{ search_query }}"
-                <a href="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-                   class="ml-2 text-blue-600 hover:text-blue-800"
-                   hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-                   hx-target="#main-content"
-                   hx-push-url="true">
-                    ×
-                </a>
-            </span>
-            {% endif %}
-            
-            {% if filter_params.min_price %}
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                От {{ filter_params.min_price }} ₽
-                <a href="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}?{% for key, value in filter_params.items %}{% if key != 'min_price' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
-                   class="ml-2 text-green-600 hover:text-green-800"
-                   hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}?{% for key, value in filter_params.items %}{% if key != 'min_price' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
-                   hx-target="#main-content"
-                   hx-push-url="true">
-                    ×
-                </a>
-            </span>
-            {% endif %}
-            
-            {% if filter_params.max_price %}
-            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-green-100 text-green-800">
-                До {{ filter_params.max_price }} ₽
-                <a href="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}?{% for key, value in filter_params.items %}{% if key != 'max_price' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
-                   class="ml-2 text-green-600 hover:text-green-800"
-                   hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}?{% for key, value in filter_params.items %}{% if key != 'max_price' %}{{ key }}={{ value }}&{% endif %}{% endfor %}"
-                   hx-target="#main-content"
-                   hx-push-url="true">
-                    ×
-                </a>
-            </span>
-            {% endif %}
-        </div>
+    <!-- Filter Modal Container -->
+    <div id="filter-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div id="filter-modal-content" class="bg-white rounded-none max-w-md w-full"></div>
     </div>
-    {% endif %}
 
-    <!-- Сетка товаров -->
+    <!-- Product Grid -->
     {% if products %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
         {% for product in products %}
-        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300">
-            <!-- Изображение товара -->
-            <div class="aspect-w-16 aspect-h-9 bg-gray-200">
-                {% if product.image %}
-                <img src="{{ product.image.url }}" 
-                     alt="{{ product.name }}"
-                     class="w-full h-48 object-cover">
+        <div class="product-card group cursor-pointer" 
+             hx-get="{% url 'main:product_detail' product.slug %}"
+             hx-target="#main-content"
+             hx-push-url="true">
+            <div class="aspect-square overflow-hidden bg-gray-100 mb-4">
+                {% if product.main_image %}
+                    <img src="{{ product.main_image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="product-image w-full h-full object-cover">
                 {% else %}
-                <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                    <span class="text-gray-400">Нет изображения</span>
-                </div>
+                    <div class="product-image w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-400 text-sm">No Image</span>
+                    </div>
                 {% endif %}
             </div>
-            
-            <!-- Информация о товаре -->
-            <div class="p-4">
-                <h3 class="font-semibold text-lg text-gray-900 mb-2 line-clamp-2">
-                    {{ product.name }}
-                </h3>
-                
-                <p class="text-gray-600 text-sm mb-3 line-clamp-2">
-                    {{ product.description|truncatewords:15 }}
-                </p>
-                
-                <div class="flex items-center justify-between mt-auto">
-                    <span class="text-2xl font-bold text-gray-900">
-                        {{ product.price }} ₽
-                    </span>
-                    
-                    <!-- Кнопка деталей -->
-                    <a href="{% url 'product_detail' product.slug %}"
-                       class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                       hx-get="{% url 'product_detail' product.slug %}"
-                       hx-target="#main-content"
-                       hx-push-url="true">
-                        Подробнее
-                    </a>
-                </div>
-                
-                <!-- Категория и дата -->
-                <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                        {{ product.category.name }}
-                    </span>
-                    <span class="text-xs text-gray-500">
-                        {{ product.created_at|date:"d.m.Y" }}
-                    </span>
-                </div>
+            <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1 uppercase">{{ product.name }}</h3>
+                <p class="text-sm text-gray-600 mb-1 uppercase">{{ product.color }}</p>
+                <p class="text-sm font-medium">${{ product.price }}</p>
             </div>
         </div>
         {% endfor %}
     </div>
-
-    <!-- Сообщение о пустом результате поиска/фильтрации -->
     {% else %}
-    <div class="text-center py-12">
-        <div class="max-w-md mx-auto">
-            <svg class="w-24 h-24 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m8-8V4a1 1 0 00-1-1h-2a1 1 0 00-1 1v1M9 7h6"></path>
-            </svg>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">Товары не найдены</h3>
-            <p class="text-gray-600 mb-6">
-                {% if search_query %}
-                По запросу "{{ search_query }}" ничего не найдено.
-                {% else %}
-                Попробуйте изменить параметры фильтрации или сбросить фильтры.
-                {% endif %}
-            </p>
-            <a href="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-               class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 inline-block"
-               hx-get="{% if current_category %}{% url 'catalog' current_category %}{% else %}/catalog/{% endif %}"
-               hx-target="#main-content"
-               hx-push-url="true">
-                Сбросить фильтры
-            </a>
-        </div>
+    <div class="text-center py-20">
+        <h3 class="text-2xl font-bold text-gray-900 mb-4 uppercase">No products found</h3>
+        <p class="text-gray-600 mb-8">
+            {% if current_category %}
+                No products available in this category yet.
+            {% else %}
+                No products available at the moment.
+            {% endif %}
+        </p>
+        <a href="{% url 'main:index' %}" 
+           hx-get="{% url 'main:index' %}" 
+           hx-target="#main-content" 
+           hx-push-url="true"
+           class="bg-black text-white px-6 py-3 text-sm font-medium uppercase hover:bg-gray-800 transition-colors">
+            Back to Home
+        </a>
     </div>
     {% endif %}
+</main>
 
-    
-</div>
-
-<style>
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-
-.aspect-w-16 {
-    position: relative;
-}
-
-.aspect-w-16::before {
-    content: '';
-    display: block;
-    padding-top: 56.25%; /* 16:9 Aspect Ratio */
-}
-
-.aspect-w-16 > * {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-}
-</style>
+<script>
+    // Product card hover and click functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}
