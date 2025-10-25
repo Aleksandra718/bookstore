@@ -17,20 +17,18 @@ class IndexView(TemplateView):
     
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
-        if request.headers.get("HX-request"):
+        if request.headers.get("HX-Request"):
             return TemplateResponse(request, 'main/home_content.html', context)
         return TemplateResponse(request, self.template_name, context)
     
 
 class CatalogView(TemplateView):
-    template = 'main/base.html'
-
+    template_name = 'main/base.html'
 
     FILTER_MAPPING = {
-        'min_price': lambda quereset, value: quereset.filter(price_gte=value),
-        'max_price': lambda quereset, value: quereset.filter(price_lte=value),
+        'min_price': lambda queryset, value: queryset.filter(price__gte=value),
+        'max_price': lambda queryset, value: queryset.filter(price__lte=value),
     }
-
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -45,15 +43,18 @@ class CatalogView(TemplateView):
         query = self.request.GET.get('q')
         if query:
             products = products.filter(
-                Q(name_icontains=query) | Q(description_icontains=query)
+                Q(name__icontains=query) | Q(description__icontains=query)
             )
 
         filter_params = {}
         for param, filter_func in self.FILTER_MAPPING.items():
             value = self.request.GET.get(param) 
             if value:
-                products = filter_func(products, value)
-                filter_params[param] = value
+                try:
+                    products = filter_func(products, value)
+                    filter_params[param] = value
+                except (ValueError, TypeError):
+                    pass
             else:
                 filter_params[param] = ''
 
@@ -76,13 +77,18 @@ class CatalogView(TemplateView):
     
     def get(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        
         if request.headers.get('HX-Request'):
             if context.get('show_search'):
                 return TemplateResponse(request, 'main/search_input.html', context)
             elif context.get('reset_search'):
                 return TemplateResponse(request, 'main/search_button.html', {})
-            template = 'main/filter_modal.html' if request.GET.get('show_filters') == 'true' else 'main/catalog.html'
-            return TemplateResponse(request, template, context)
+            elif request.GET.get('show_filters') == 'true':
+                return TemplateResponse(request, 'main/filter_modal.html', context)
+            else:
+                return TemplateResponse(request, 'main/catalog.html', context)
+        
+        # Для обычных запросов возвращаем полную страницу
         return TemplateResponse(request, self.template_name, context)
 
 
@@ -105,6 +111,6 @@ class ProductDetailView(DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         context = self.get_context_data(**kwargs)
-        if request.headers.get('HX-request'):
+        if request.headers.get('HX-Request'):
             return TemplateResponse(request, 'main/product_detail.html', context)
         return TemplateResponse(request, self.template_name, context)
