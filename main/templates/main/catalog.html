@@ -1,290 +1,328 @@
-{% block content %}
-<main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Breadcrumb and Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
-        <div>
-            <nav class="flex text-sm text-gray-500 mb-2">
-                <a href="{% url 'main:index' %}" 
-                   class="hover:text-gray-700">Home</a>
-                {% if current_category %}
-                <span class="mx-2">/</span>
-                <span class="text-gray-900 font-medium">{{ current_category.name }}</span>
-                {% endif %}
-            </nav>
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 serif-font">
-                {% if current_category %}
-                    {{ current_category.name }}
-                {% else %}
-                    All Books
-                {% endif %}
-            </h1>
-            {% if current_category %}
-            <p class="text-gray-600 mt-2">{{ products|length }} books available</p>
-            {% endif %}
-        </div>
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIVRES NOBLES | Bookstore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
         
-        <div class="flex space-x-4 w-full sm:w-auto">
-            <button class="bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors rounded-lg w-1/2 sm:w-auto flex items-center justify-center"
-                    onclick="toggleSortDropdown()">
-                <i class="fas fa-sort mr-2"></i>
-                Sort
-            </button>
-            <button class="accent-bg text-white px-4 py-2 text-sm font-medium hover:bg-brown-700 transition-colors rounded-lg w-1/2 sm:w-auto flex items-center justify-center"
-                    onclick="toggleFilterModal()">
-                <i class="fas fa-filter mr-2"></i>
-                Filters
-            </button>
-        </div>
-    </div>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fefefe;
+        }
+        
+        .serif-font {
+            font-family: 'Crimson Text', serif;
+        }
+        
+        .book-card {
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .book-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+            padding: 0.5rem 0;
+        }
+        
+        .nav-link:hover::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background-color: #8B4513;
+        }
 
-    <!-- Sort Dropdown -->
-    <div id="sort-dropdown" class="hidden absolute right-4 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
-        <div class="py-1">
-            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
-                    onclick="sortBooks('newest')">
-                Newest First
-            </button>
-            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
-                    onclick="sortBooks('price_low')">
-                Price: Low to High
-            </button>
-            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
-                    onclick="sortBooks('price_high')">
-                Price: High to Low
-            </button>
-            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
-                    onclick="sortBooks('title')">
-                Title A-Z
-            </button>
-        </div>
-    </div>
-
-    <!-- Filter Modal -->
-    <div id="filter-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white rounded-lg max-w-md w-full mx-4">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold text-gray-900">Filter Books</h3>
-                    <button onclick="toggleFilterModal()" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
+        .header-border {
+            border-bottom: 1px solid #e8e0d8;
+        }
+        
+        .bookish-bg {
+            background-color: #f9f5f0;
+        }
+        
+        .accent-color {
+            color: #8B4513;
+        }
+        
+        .accent-bg {
+            background-color: #8B4513;
+        }
+        
+        .price-tag {
+            background: linear-gradient(135deg, #8B4513, #A0522D);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, #f9f5f0 0%, #e8e0d8 100%);
+        }
+        
+        /* Mobile menu styles */
+        .mobile-menu {
+            transform: translateX(-100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .mobile-menu.open {
+            transform: translateX(0);
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background-color: #5a3921;
+            margin: 5px 0;
+            transition: 0.3s;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <!-- Header -->
+    <header class="sticky top-0 bg-white z-30 header-border shadow-sm">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="/">
+                        <h1 class="text-xl font-bold tracking-tight text-left serif-font accent-color">
+                            LIVRES NOBLES
+                        </h1>
+                        <p class="text-xs text-gray-600 mt-1">Fine Books & Literature</p>
+                    </a>
                 </div>
                 
-                <!-- Price Range -->
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 mb-3">Price Range</h4>
-                    <div class="flex space-x-4">
-                        <input type="number" placeholder="Min" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                        <input type="number" placeholder="Max" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
-                    </div>
+                <!-- Desktop Navigation -->
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
+                        FANTASY
+                    </a>
+                    <a href="#" class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
+                        BESTSELLERS
+                    </a>
+                    <a href="#" class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
+                        NEW ARRIVALS
+                    </a>
+                </nav>
+                
+                <!-- Right side links -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                        <i class="fas fa-search mr-1"></i>SEARCH
+                    </a>
+                    <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-600">
+                        <i class="fas fa-user mr-1"></i>ACCOUNT
+                    </a>
+                    <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-700">
+                        <i class="fas fa-shopping-cart mr-1"></i>CART (0)
+                    </a>
                 </div>
                 
-                <!-- Format -->
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 mb-3">Format</h4>
-                    <div class="space-y-2">
-                        <label class="flex items-center">
-                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
-                            <span class="ml-2 text-sm text-gray-700">Hardcover</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
-                            <span class="ml-2 text-sm text-gray-700">Paperback</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
-                            <span class="ml-2 text-sm text-gray-700">E-book</span>
-                        </label>
-                    </div>
-                </div>
-                
-                <!-- Availability -->
-                <div class="mb-6">
-                    <h4 class="font-medium text-gray-900 mb-3">Availability</h4>
-                    <label class="flex items-center">
-                        <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
-                        <span class="ml-2 text-sm text-gray-700">In Stock Only</span>
-                    </label>
-                </div>
-                
-                <div class="flex space-x-3 pt-4 border-t border-gray-200">
-                    <button class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
-                        Clear All
-                    </button>
-                    <button class="flex-1 accent-bg text-white py-2 rounded-lg font-medium hover:bg-brown-700 transition-colors">
-                        Apply Filters
-                    </button>
+                <!-- Mobile Cart Icon -->
+                <div class="md:hidden">
+                    <a href="#" class="text-sm font-medium text-gray-900">
+                        <i class="fas fa-shopping-cart"></i> (0)
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
+    </header>
 
-    <!-- Active Filters -->
-    <div id="active-filters" class="flex flex-wrap gap-2 mb-6 hidden">
-        <!-- Active filters will appear here -->
-    </div>
-
-    <!-- Books Grid -->
-    {% if products %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-        {% for product in products %}
-        <div class="book-card group cursor-pointer bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
-             onclick="openBookDetail('{{ product.slug }}')">
-            <div class="aspect-[3/4] overflow-hidden bg-gray-50 relative">
-                {% if product.main_image %}
-                    <img src="{{ product.main_image.url }}" 
-                         alt="{{ product.name }}" 
-                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                {% else %}
-                    <div class="w-full h-full flex items-center justify-center bookish-bg">
-                        <i class="fas fa-book text-4xl text-gray-400"></i>
-                    </div>
-                {% endif %}
-                
-                <!-- Format Badge -->
-                {% if product.format %}
-                <div class="absolute top-2 left-2">
-                    <span class="bg-white/90 text-xs px-2 py-1 rounded-full text-gray-700 font-medium">
-                        {{ product.format }}
-                    </span>
-                </div>
-                {% endif %}
-                
-                <!-- Quick Action -->
-                <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button class="bg-white/90 p-2 rounded-full shadow-sm hover:bg-white transition-colors">
-                        <i class="fas fa-shopping-cart text-sm text-gray-700"></i>
-                    </button>
+    <!-- Main Content -->
+    <main class="min-h-screen">
+        <!-- Hero Section -->
+        <section class="hero-section py-16 md:py-24">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl text-center">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 serif-font">
+                    LIVRES NOBLES
+                </h2>
+                <p class="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl mx-auto serif-font italic">
+                    "A room without books is like a body without a soul." - Cicero
+                </p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <a href="#" class="px-8 py-3 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm">
+                        Browse Collection
+                    </a>
+                    <a href="#" class="px-8 py-3 accent-bg text-white rounded-lg font-medium hover:bg-brown-700 transition-colors shadow-sm">
+                        New Arrivals
+                    </a>
                 </div>
             </div>
-            
-            <div class="p-4">
-                <h3 class="font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-accent-color transition-colors">
-                    {{ product.name }}
-                </h3>
-                <p class="text-sm text-gray-600 mb-2">{{ product.author|default:"Unknown Author" }}</p>
+        </section>
+        
+        <!-- Categories Section -->
+        <section class="py-16 bg-white">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+                <div class="text-center mb-12">
+                    <h3 class="text-3xl font-bold text-gray-900 mb-4 serif-font">Browse Our Collection</h3>
+                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                        Discover books across all genres, from timeless classics to contemporary masterpieces
+                    </p>
+                </div>
                 
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="price-tag text-xs">${{ product.price }}</span>
-                        {% if product.original_price %}
-                        <span class="text-xs text-gray-500 line-through">${{ product.original_price }}</span>
-                        {% endif %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Fantasy Category -->
+                    <div class="book-card p-8 border border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-300 text-center group cursor-pointer">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-dragon text-3xl accent-color"></i>
+                        </div>
+                        <h3 class="text-xl font-bold serif-font text-gray-900 mb-2">FANTASY</h3>
+                        <p class="text-gray-600">245 titles available</p>
                     </div>
                     
-                    <!-- Rating -->
-                    {% if product.rating %}
-                    <div class="flex items-center space-x-1">
-                        <i class="fas fa-star text-yellow-400 text-xs"></i>
-                        <span class="text-xs text-gray-600">{{ product.rating }}</span>
+                    <!-- Mystery Category -->
+                    <div class="book-card p-8 border border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-300 text-center group cursor-pointer">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-search text-3xl accent-color"></i>
+                        </div>
+                        <h3 class="text-xl font-bold serif-font text-gray-900 mb-2">MYSTERY</h3>
+                        <p class="text-gray-600">189 titles available</p>
                     </div>
-                    {% endif %}
+                    
+                    <!-- Romance Category -->
+                    <div class="book-card p-8 border border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-300 text-center group cursor-pointer">
+                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                            <i class="fas fa-heart text-3xl accent-color"></i>
+                        </div>
+                        <h3 class="text-xl font-bold serif-font text-gray-900 mb-2">ROMANCE</h3>
+                        <p class="text-gray-600">312 titles available</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Featured Books Section -->
+        <section class="py-16 bg-gray-50">
+            <div class="mx-auto px-4 sm:px-6 lg:px-8 max-w-6xl">
+                <div class="flex justify-between items-center mb-8">
+                    <h3 class="text-2xl font-bold text-gray-900 serif-font">Featured Books</h3>
+                    <a href="#" class="text-sm font-medium accent-color hover:underline">View All</a>
                 </div>
                 
-                <!-- Stock Status -->
-                {% if product.in_stock %}
-                <div class="flex items-center mt-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                    <span class="text-xs text-gray-600">In Stock</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Book 1 -->
+                    <div class="book-card rounded-lg overflow-hidden border border-gray-200 bg-white">
+                        <div class="aspect-[3/4] bg-gray-100 rounded-t-lg flex items-center justify-center bookish-bg">
+                            <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm mb-1 text-gray-900">The Shadow Kingdom</h4>
+                            <p class="text-xs text-gray-600 mb-3">Elena Montgomery</p>
+                            <div class="flex justify-between items-center">
+                                <span class="price-tag text-xs">$24.99</span>
+                                <button class="text-xs accent-color hover:underline font-medium">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Book 2 -->
+                    <div class="book-card rounded-lg overflow-hidden border border-gray-200 bg-white">
+                        <div class="aspect-[3/4] bg-gray-100 rounded-t-lg flex items-center justify-center bookish-bg">
+                            <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm mb-1 text-gray-900">Midnight Whispers</h4>
+                            <p class="text-xs text-gray-600 mb-3">James Peterson</p>
+                            <div class="flex justify-between items-center">
+                                <span class="price-tag text-xs">$19.99</span>
+                                <button class="text-xs accent-color hover:underline font-medium">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Book 3 -->
+                    <div class="book-card rounded-lg overflow-hidden border border-gray-200 bg-white">
+                        <div class="aspect-[3/4] bg-gray-100 rounded-t-lg flex items-center justify-center bookish-bg">
+                            <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm mb-1 text-gray-900">Eternal Flame</h4>
+                            <p class="text-xs text-gray-600 mb-3">Sarah Chen</p>
+                            <div class="flex justify-between items-center">
+                                <span class="price-tag text-xs">$27.99</span>
+                                <button class="text-xs accent-color hover:underline font-medium">Details</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Book 4 -->
+                    <div class="book-card rounded-lg overflow-hidden border border-gray-200 bg-white">
+                        <div class="aspect-[3/4] bg-gray-100 rounded-t-lg flex items-center justify-center bookish-bg">
+                            <i class="fas fa-book-open text-4xl text-gray-400"></i>
+                        </div>
+                        <div class="p-4">
+                            <h4 class="font-bold text-sm mb-1 text-gray-900">Ocean's Legacy</h4>
+                            <p class="text-xs text-gray-600 mb-3">Marcus Wright</p>
+                            <div class="flex justify-between items-center">
+                                <span class="price-tag text-xs">$22.99</span>
+                                <button class="text-xs accent-color hover:underline font-medium">Details</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                {% else %}
-                <div class="flex items-center mt-2">
-                    <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
-                    <span class="text-xs text-gray-600">Out of Stock</span>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bookish-bg border-t border-gray-200">
+        <div class="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-6xl">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h4 class="font-bold text-lg mb-4 serif-font accent-color">LIVRES NOBLES</h4>
+                    <p class="text-sm text-gray-700">
+                        Your destination for fine literature and rare books since 1995.
+                    </p>
                 </div>
-                {% endif %}
+                <div>
+                    <h4 class="font-bold text-lg mb-4 text-gray-900">Shop</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-700 hover:underline">All Categories</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">Bestsellers</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">New Releases</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">Gift Cards</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4 text-gray-900">Help</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="text-gray-700 hover:underline">Shipping Info</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">Returns</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">Contact Us</a></li>
+                        <li><a href="#" class="text-gray-700 hover:underline">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-lg mb-4 text-gray-900">Newsletter</h4>
+                    <p class="text-sm text-gray-700 mb-3">Subscribe for updates and exclusive offers</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Your email" class="px-3 py-2 border border-gray-300 rounded-l text-sm w-full focus:outline-none focus:ring-1 focus:ring-accent-color">
+                        <button class="accent-bg text-white px-4 py-2 rounded-r text-sm font-medium hover:bg-brown-700 transition-colors">Join</button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-300 mt-8 pt-8 text-center text-sm text-gray-600">
+                <p>&copy; 2023 Livres Nobles Bookstore. All rights reserved.</p>
             </div>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <!-- Empty State -->
-    <div class="text-center py-20">
-        <div class="w-24 h-24 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center">
-            <i class="fas fa-book-open text-3xl accent-color"></i>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-900 mb-4 serif-font">No Books Found</h3>
-        <p class="text-gray-600 mb-8 max-w-md mx-auto">
-            {% if current_category %}
-                We couldn't find any books in this category at the moment.
-            {% else %}
-                Our bookshelf is currently empty. Please check back soon!
-            {% endif %}
-        </p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="{% url 'main:index' %}" 
-               class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors inline-flex items-center justify-center">
-                <i class="fas fa-home mr-2"></i>
-                Back to Home
-            </a>
-            <button onclick="clearAllFilters()" 
-                    class="accent-bg text-white px-6 py-3 rounded-lg font-medium hover:bg-brown-700 transition-colors inline-flex items-center justify-center">
-                <i class="fas fa-times mr-2"></i>
-                Clear Filters
-            </button>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Load More Button (if paginated) -->
-    {% if products.has_next %}
-    <div class="text-center mt-12">
-        <button class="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            Load More Books
-        </button>
-    </div>
-    {% endif %}
-</main>
-
-<script>
-    // Toggle sort dropdown
-    function toggleSortDropdown() {
-        const dropdown = document.getElementById('sort-dropdown');
-        dropdown.classList.toggle('hidden');
-    }
-
-    // Toggle filter modal
-    function toggleFilterModal() {
-        const modal = document.getElementById('filter-modal');
-        modal.classList.toggle('hidden');
-    }
-
-    // Sort books function
-    function sortBooks(sortType) {
-        // Implement sorting logic here
-        console.log('Sorting by:', sortType);
-        toggleSortDropdown(); // Close dropdown after selection
-    }
-
-    // Open book detail (placeholder function)
-    function openBookDetail(slug) {
-        // Implement book detail navigation
-        window.location.href = `/books/${slug}/`;
-    }
-
-    // Clear all filters
-    function clearAllFilters() {
-        // Implement clear filters logic
-        console.log('Clearing all filters');
-    }
-
-    // Close dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        const dropdown = document.getElementById('sort-dropdown');
-        const sortButton = event.target.closest('button');
-        
-        if (!dropdown.contains(event.target) && !sortButton) {
-            dropdown.classList.add('hidden');
-        }
-    });
-</script>
-
-<style>
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
-{% endblock %}
+    </footer>
+</body>
+</html>
