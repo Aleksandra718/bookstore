@@ -1,90 +1,290 @@
 {% block content %}
 <main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <!-- Breadcrumb and Filters -->
+    <!-- Breadcrumb and Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
-        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+        <div>
+            <nav class="flex text-sm text-gray-500 mb-2">
+                <a href="{% url 'main:index' %}" 
+                   class="hover:text-gray-700">Home</a>
+                {% if current_category %}
+                <span class="mx-2">/</span>
+                <span class="text-gray-900 font-medium">{{ current_category.name }}</span>
+                {% endif %}
+            </nav>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 serif-font">
+                {% if current_category %}
+                    {{ current_category.name }}
+                {% else %}
+                    All Books
+                {% endif %}
+            </h1>
             {% if current_category %}
-                {{ current_category|upper }} > NEW ARRIVALS
-            {% else %}
-                ALL PRODUCTS
+            <p class="text-gray-600 mt-2">{{ products|length }} books available</p>
             {% endif %}
-        </h2>
-        <button class="bg-black text-white px-4 py-2 text-sm font-medium uppercase hover:bg-gray-800 transition-colors w-full sm:w-auto" 
-                hx-get="{% if current_category %}{% url 'main:catalog' current_category %}{% else %}{% url 'main:catalog_all' %}{% endif %}?show_filters=true&color={{ filter_params.color|urlencode }}&min_price={{ filter_params.min_price|urlencode }}&max_price={{ filter_params.max_price|urlencode }}&size={{ filter_params.size|urlencode }}" 
-                hx-target="#filter-modal-content"
-                hx-swap="innerHTML"
-                hx-on::after-request="document.getElementById('filter-modal').classList.remove('hidden')">
-            FILTERS
-        </button>
+        </div>
+        
+        <div class="flex space-x-4 w-full sm:w-auto">
+            <button class="bg-gray-100 text-gray-700 px-4 py-2 text-sm font-medium hover:bg-gray-200 transition-colors rounded-lg w-1/2 sm:w-auto flex items-center justify-center"
+                    onclick="toggleSortDropdown()">
+                <i class="fas fa-sort mr-2"></i>
+                Sort
+            </button>
+            <button class="accent-bg text-white px-4 py-2 text-sm font-medium hover:bg-brown-700 transition-colors rounded-lg w-1/2 sm:w-auto flex items-center justify-center"
+                    onclick="toggleFilterModal()">
+                <i class="fas fa-filter mr-2"></i>
+                Filters
+            </button>
+        </div>
     </div>
 
-    <!-- Filter Modal Container -->
+    <!-- Sort Dropdown -->
+    <div id="sort-dropdown" class="hidden absolute right-4 mt-2 w-48 bg-white rounded-lg shadow-lg z-10 border border-gray-200">
+        <div class="py-1">
+            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    onclick="sortBooks('newest')">
+                Newest First
+            </button>
+            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    onclick="sortBooks('price_low')">
+                Price: Low to High
+            </button>
+            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    onclick="sortBooks('price_high')">
+                Price: High to Low
+            </button>
+            <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" 
+                    onclick="sortBooks('title')">
+                Title A-Z
+            </button>
+        </div>
+    </div>
+
+    <!-- Filter Modal -->
     <div id="filter-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-        <div id="filter-modal-content" class="bg-white rounded-none max-w-md w-full"></div>
+        <div class="bg-white rounded-lg max-w-md w-full mx-4">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-900">Filter Books</h3>
+                    <button onclick="toggleFilterModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <!-- Price Range -->
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-900 mb-3">Price Range</h4>
+                    <div class="flex space-x-4">
+                        <input type="number" placeholder="Min" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                        <input type="number" placeholder="Max" class="w-1/2 px-3 py-2 border border-gray-300 rounded-lg text-sm">
+                    </div>
+                </div>
+                
+                <!-- Format -->
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-900 mb-3">Format</h4>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                            <span class="ml-2 text-sm text-gray-700">Hardcover</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                            <span class="ml-2 text-sm text-gray-700">Paperback</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                            <span class="ml-2 text-sm text-gray-700">E-book</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Availability -->
+                <div class="mb-6">
+                    <h4 class="font-medium text-gray-900 mb-3">Availability</h4>
+                    <label class="flex items-center">
+                        <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                        <span class="ml-2 text-sm text-gray-700">In Stock Only</span>
+                    </label>
+                </div>
+                
+                <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                    <button class="flex-1 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                        Clear All
+                    </button>
+                    <button class="flex-1 accent-bg text-white py-2 rounded-lg font-medium hover:bg-brown-700 transition-colors">
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Product Grid -->
+    <!-- Active Filters -->
+    <div id="active-filters" class="flex flex-wrap gap-2 mb-6 hidden">
+        <!-- Active filters will appear here -->
+    </div>
+
+    <!-- Books Grid -->
     {% if products %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
         {% for product in products %}
-        <div class="product-card group cursor-pointer" 
-             hx-get="{% url 'main:product_detail' product.slug %}"
-             hx-target="#main-content"
-             hx-push-url="true">
-            <div class="aspect-square overflow-hidden bg-gray-100 mb-4">
+        <div class="book-card group cursor-pointer bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300"
+             onclick="openBookDetail('{{ product.slug }}')">
+            <div class="aspect-[3/4] overflow-hidden bg-gray-50 relative">
                 {% if product.main_image %}
                     <img src="{{ product.main_image.url }}" 
                          alt="{{ product.name }}" 
-                         class="product-image w-full h-full object-cover">
+                         class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
                 {% else %}
-                    <div class="product-image w-full h-full bg-gray-200 flex items-center justify-center">
-                        <span class="text-gray-400 text-sm">No Image</span>
+                    <div class="w-full h-full flex items-center justify-center bookish-bg">
+                        <i class="fas fa-book text-4xl text-gray-400"></i>
                     </div>
                 {% endif %}
+                
+                <!-- Format Badge -->
+                {% if product.format %}
+                <div class="absolute top-2 left-2">
+                    <span class="bg-white/90 text-xs px-2 py-1 rounded-full text-gray-700 font-medium">
+                        {{ product.format }}
+                    </span>
+                </div>
+                {% endif %}
+                
+                <!-- Quick Action -->
+                <div class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button class="bg-white/90 p-2 rounded-full shadow-sm hover:bg-white transition-colors">
+                        <i class="fas fa-shopping-cart text-sm text-gray-700"></i>
+                    </button>
+                </div>
             </div>
-            <div class="text-center">
-                <h3 class="text-sm font-medium text-gray-900 mb-1 uppercase">{{ product.name }}</h3>
-                <p class="text-sm text-gray-600 mb-1 uppercase">{{ product.color }}</p>
-                <p class="text-sm font-medium">${{ product.price }}</p>
+            
+            <div class="p-4">
+                <h3 class="font-semibold text-gray-900 mb-1 line-clamp-2 group-hover:text-accent-color transition-colors">
+                    {{ product.name }}
+                </h3>
+                <p class="text-sm text-gray-600 mb-2">{{ product.author|default:"Unknown Author" }}</p>
+                
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="price-tag text-xs">${{ product.price }}</span>
+                        {% if product.original_price %}
+                        <span class="text-xs text-gray-500 line-through">${{ product.original_price }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Rating -->
+                    {% if product.rating %}
+                    <div class="flex items-center space-x-1">
+                        <i class="fas fa-star text-yellow-400 text-xs"></i>
+                        <span class="text-xs text-gray-600">{{ product.rating }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Stock Status -->
+                {% if product.in_stock %}
+                <div class="flex items-center mt-2">
+                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <span class="text-xs text-gray-600">In Stock</span>
+                </div>
+                {% else %}
+                <div class="flex items-center mt-2">
+                    <div class="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                    <span class="text-xs text-gray-600">Out of Stock</span>
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
+    <!-- Empty State -->
     <div class="text-center py-20">
-        <h3 class="text-2xl font-bold text-gray-900 mb-4 uppercase">No products found</h3>
-        <p class="text-gray-600 mb-8">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center">
+            <i class="fas fa-book-open text-3xl accent-color"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-900 mb-4 serif-font">No Books Found</h3>
+        <p class="text-gray-600 mb-8 max-w-md mx-auto">
             {% if current_category %}
-                No products available in this category yet.
+                We couldn't find any books in this category at the moment.
             {% else %}
-                No products available at the moment.
+                Our bookshelf is currently empty. Please check back soon!
             {% endif %}
         </p>
-        <a href="{% url 'main:index' %}" 
-           hx-get="{% url 'main:index' %}" 
-           hx-target="#main-content" 
-           hx-push-url="true"
-           class="bg-black text-white px-6 py-3 text-sm font-medium uppercase hover:bg-gray-800 transition-colors">
-            Back to Home
-        </a>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{% url 'main:index' %}" 
+               class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-home mr-2"></i>
+                Back to Home
+            </a>
+            <button onclick="clearAllFilters()" 
+                    class="accent-bg text-white px-6 py-3 rounded-lg font-medium hover:bg-brown-700 transition-colors inline-flex items-center justify-center">
+                <i class="fas fa-times mr-2"></i>
+                Clear Filters
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Load More Button (if paginated) -->
+    {% if products.has_next %}
+    <div class="text-center mt-12">
+        <button class="bg-white border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+            Load More Books
+        </button>
     </div>
     {% endif %}
 </main>
 
 <script>
-    // Product card hover and click functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const productCards = document.querySelectorAll('.product-card');
-        productCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-2px)';
-                this.style.transition = 'transform 0.3s ease';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
+    // Toggle sort dropdown
+    function toggleSortDropdown() {
+        const dropdown = document.getElementById('sort-dropdown');
+        dropdown.classList.toggle('hidden');
+    }
+
+    // Toggle filter modal
+    function toggleFilterModal() {
+        const modal = document.getElementById('filter-modal');
+        modal.classList.toggle('hidden');
+    }
+
+    // Sort books function
+    function sortBooks(sortType) {
+        // Implement sorting logic here
+        console.log('Sorting by:', sortType);
+        toggleSortDropdown(); // Close dropdown after selection
+    }
+
+    // Open book detail (placeholder function)
+    function openBookDetail(slug) {
+        // Implement book detail navigation
+        window.location.href = `/books/${slug}/`;
+    }
+
+    // Clear all filters
+    function clearAllFilters() {
+        // Implement clear filters logic
+        console.log('Clearing all filters');
+    }
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(event) {
+        const dropdown = document.getElementById('sort-dropdown');
+        const sortButton = event.target.closest('button');
+        
+        if (!dropdown.contains(event.target) && !sortButton) {
+            dropdown.classList.add('hidden');
+        }
     });
 </script>
+
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
 {% endblock %}
