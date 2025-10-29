@@ -4,46 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}LIVRES NOBLES | Bookstore{% endblock %}</title>
+    <title>{% block title %}ENFANTS RICHES DÉPRIMÉS{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #fefefe;
         }
         
-        .serif-font {
-            font-family: 'Crimson Text', serif;
+        .product-image {
+            transition: transform 0.3s ease;
         }
         
-        .book-card {
-            transition: all 0.3s ease;
-            background: white;
-        }
-        
-        .book-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        
-        .book-cover {
-            transition: transform 0.5s ease;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        }
-        
-        .book-card:hover .book-cover {
-            transform: scale(1.03);
+        .product-card:hover .product-image {
+            transform: scale(1.05);
         }
         
         .nav-link {
             position: relative;
             transition: all 0.3s ease;
-            padding: 0.5rem 0;
         }
         
         .nav-link:hover::after {
@@ -53,7 +35,7 @@
             left: 0;
             width: 100%;
             height: 1px;
-            background-color: #8B4513;
+            background-color: black;
         }
 
         .nav-link.active::after {
@@ -63,14 +45,13 @@
             left: 0;
             width: 100%;
             height: 1px;
-            background-color: #8B4513;
+            background-color: black;
         }
 
         /* Mobile menu styles */
         .mobile-menu {
             transform: translateX(-100%);
             transition: transform 0.3s ease-in-out;
-            background-color: #f9f5f0;
         }
         
         .mobile-menu.open {
@@ -85,7 +66,7 @@
             display: block;
             width: 25px;
             height: 2px;
-            background-color: #5a3921;
+            background-color: black;
             margin: 5px 0;
             transition: 0.3s;
         }
@@ -125,37 +106,6 @@
         .htmx-request.htmx-indicator {
             opacity: 1;
         }
-        
-        /* Bookish decorative elements */
-        .header-border {
-            border-bottom: 1px solid #e8e0d8;
-        }
-        
-        .bookish-bg {
-            background-color: #f9f5f0;
-        }
-        
-        .accent-color {
-            color: #8B4513;
-        }
-        
-        .accent-bg {
-            background-color: #8B4513;
-        }
-        
-        .price-tag {
-            background: linear-gradient(135deg, #8B4513, #A0522D);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .hero-section {
-            background: linear-gradient(135deg, #f9f5f0 0%, #e8e0d8 100%);
-            border-radius: 1rem;
-        }
     </style>
 </head>
 <body class="bg-white">
@@ -164,10 +114,11 @@
     
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="mobile-menu fixed top-0 left-0 w-80 h-full bg-white z-50 md:hidden shadow-lg">
-        <div class="p-6 h-full flex flex-col">
+        <div class="p-6">
             <div class="flex justify-between items-center mb-8">
-                <h2 class="text-lg font-bold tracking-tight serif-font accent-color">
-                    LIVRES NOBLES
+                <h2 class="text-lg font-bold tracking-tight">
+                    ENFANTS RICHES <br>
+                    DÉPRIMÉS
                 </h2>   
                 <button id="closeMenu" class="hamburger active">
                     <span></span>
@@ -176,46 +127,40 @@
                 </button>
             </div>
             
-            <nav class="space-y-6 flex-grow">
+            <nav class="space-y-6">
                 <a href="{% url 'main:index' %}" 
+                   hx-get="{% url 'main:index' %}" 
+                   hx-target="#main-content" 
+                   hx-push-url="true"
                    class="mobile-nav-link block text-lg font-medium text-gray-900 hover:text-gray-700 py-2 border-b border-gray-200">
-                   <i class="fas fa-home mr-2 accent-color"></i>HOME
+                   HOME
                 </a>
                 {% for category in categories %}
                 <a href="{% url 'main:catalog' category.slug %}" 
-                   class="mobile-nav-link block text-lg font-medium text-gray-900 hover:text-gray-700 py-2 border-b border-gray-200">
-                   <i class="fas fa-book mr-2 accent-color"></i>{{ category.name|upper }}
+                   hx-get="{% url 'main:catalog' category.slug %}" 
+                   hx-target="#main-content" 
+                   hx-push-url="true"
+                   class="mobile-nav-link block text-lg font-medium text-gray-900 hover:text-gray-700 py-2 border-b border-gray-200 {% if current_category == category.slug %}active{% endif %}">
+                   {{ category.name|upper }}
                 </a>
                 {% endfor %}
-                <a href="#" 
-                   class="mobile-nav-link block text-lg font-medium text-gray-900 hover:text-gray-700 py-2 border-b border-gray-200">
-                   <i class="fas fa-fire mr-2 accent-color"></i>BESTSELLERS
-                </a>
-                <a href="#" 
-                   class="mobile-nav-link block text-lg font-medium text-gray-900 hover:text-gray-700 py-2 border-b border-gray-200">
-                   <i class="fas fa-newspaper mr-2 accent-color"></i>NEW ARRIVALS
-                </a>
             </nav>
             
             <div class="mt-8 space-y-4">
-                <a href="#" class="block text-sm font-medium text-gray-900 hover:text-gray-700 py-2">
-                    <i class="fas fa-search mr-2 accent-color"></i>SEARCH
-                </a>
+                <a href="#" class="block text-sm font-medium text-gray-900 hover:text-gray-700 py-2">SEARCH</a>
                 
-                <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-600 py-2">
-                    <i class="fas fa-user mr-2 accent-color"></i>ACCOUNT
+                <a class="text-sm font-medium text-gray-900 uppercase hover:text-gray-600">
+                    ACCOUNT
                 </a>
-                <a href="#" id="mobileCart" class="block text-sm font-medium text-gray-900 hover:text-gray-700 py-2">
-                    <i class="fas fa-shopping-cart mr-2 accent-color"></i>CART (0)
-                </a>
+                <a href="#" id="mobileCart" class="block text-sm font-medium text-gray-900 hover:text-gray-700 py-2">CART (0)</a>
             </div>
         </div>
     </div>
 
     <!-- Header -->
-    <header class="sticky top-0 bg-white z-30 header-border shadow-sm">
+    <header class="sticky top-0">
         <div class="mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
+            <div class="flex justify-between items-center h-16">
                 <!-- Mobile Menu Button -->
                 <button id="menuToggle" class="hamburger md:hidden">
                     <span></span>
@@ -225,11 +170,14 @@
                 
                 <!-- Logo -->
                 <div class="flex-shrink-0">
-                    <a href="{% url 'main:index' %}">
-                        <h1 class="text-xl font-bold tracking-tight text-left serif-font accent-color">
-                            LIVRES NOBLES
+                    <a href="{% url 'main:index' %}" 
+                       hx-get="{% url 'main:index' %}" 
+                       hx-target="#main-content" 
+                       hx-push-url="true">
+                        <h1 class="text-sm sm:text-lg font-bold tracking-tight text-left">
+                            ENFANTS RICHES<br>
+                            DÉPRIMÉS
                         </h1>
-                        <p class="text-xs text-gray-600 mt-1">Fine Books & Literature</p>
                     </a>
                 </div>
                 
@@ -237,163 +185,71 @@
                 <nav class="hidden md:flex space-x-8">
                     {% for category in categories %}
                     <a href="{% url 'main:catalog' category.slug %}" 
-                       class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
+                       hx-get="{% url 'main:catalog' category.slug %}" 
+                       hx-target="#main-content" 
+                       hx-push-url="true"
+                       class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700 {% if current_category == category.slug %}active{% endif %}">
                        {{ category.name|upper }}
                     </a>
                     {% endfor %}
-                    <a href="#" class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
-                        BESTSELLERS
-                    </a>
-                    <a href="#" class="nav-link text-sm font-medium text-gray-900 hover:text-gray-700">
-                        NEW ARRIVALS
-                    </a>
                 </nav>
                 
                 <!-- Right side links -->
                 <div class="hidden md:flex items-center space-x-6">
-                    <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                        <i class="fas fa-search mr-1"></i>SEARCH
+                    <div class="relative" id="mobile-search-wrapper">
+                        <button id="mobile-search-toggle" 
+                                hx-get="{% url 'main:catalog_all' %}?show_search=true" 
+                                hx-target="#mobile-search-wrapper" 
+                                hx-swap="innerHTML"
+                                class="text-sm font-medium uppercase hover:text-gray-600">
+                            SEARCH
+                        </button>
+                    </div>
+                    <a class="text-sm font-medium text-gray-900 uppercase hover:text-gray-600">
+                        ACCOUNT
                     </a>
-                    <a href="#" class="text-sm font-medium text-gray-900 hover:text-gray-600">
-                        <i class="fas fa-user mr-1"></i>ACCOUNT
-                    </a>
-                    <a href="#" id="desktopCart" class="text-sm font-medium text-gray-900 hover:text-gray-700">
-                        <i class="fas fa-shopping-cart mr-1"></i>CART (0)
-                    </a>
+                    <a href="#" id="desktopCart" class="text-sm font-medium text-gray-900 hover:text-gray-700">CART (0)</a>
                 </div>
                 
                 <!-- Mobile Cart Icon -->
                 <div class="md:hidden">
-                    <a href="#" id="mobileCartHeader" class="text-sm font-medium text-gray-900">
-                        <i class="fas fa-shopping-cart"></i> (0)
-                    </a>
+                    <a href="#" id="mobileCartHeader" class="text-xs font-medium text-gray-900">CART (0)</a>
                 </div>
             </div>
         </div>
     </header>
+    <div id="cart-container"></div>
 
     <!-- Loading Indicator -->
-    <div class="htmx-indicator fixed top-0 left-0 w-full h-1 accent-bg z-50"></div>
+    <div class="htmx-indicator fixed top-0 left-0 w-full h-1 bg-black z-50"></div>
 
     <!-- Main Content -->
-    <main id="main-content" class="min-h-screen">
+    <div id="main-content">
         {% block content %}
-        <!-- Hero Section -->
-        <section class="hero-section mx-auto px-4 sm:px-6 lg:px-8 py-12 mb-16">
-            <div class="max-w-4xl mx-auto text-center">
-                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 serif-font">
-                    LIVRES NOBLES
+        <!-- Default home content -->
+        <main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="text-center py-20">
+                <h2 class="text-4xl font-bold tracking-tight text-gray-900 mb-4">
+                    ENFANTS RICHES DÉPRIMÉS
                 </h2>
-                <p class="text-lg md:text-xl text-gray-700 mb-8 max-w-2xl mx-auto serif-font italic">
-                    "A room without books is like a body without a soul." - Cicero
+                <p class="text-lg text-gray-600 mb-8">
+                    Select a category to browse our collection
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="#" class="px-8 py-3 bg-white border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                        Browse Collection
-                    </a>
-                    <a href="#" class="px-8 py-3 accent-bg text-white rounded-lg font-medium hover:bg-brown-700 transition-colors shadow-sm">
-                        New Arrivals
-                    </a>
-                </div>
-            </div>
-        </section>
-        
-        <!-- Categories Grid -->
-        <section class="mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16">
-            <div class="max-w-6xl mx-auto">
-                <div class="text-center mb-12">
-                    <h3 class="text-3xl font-bold text-gray-900 mb-4 serif-font">Browse Our Collection</h3>
-                    <p class="text-lg text-gray-600 max-w-2xl mx-auto">
-                        Discover books across all genres, from timeless classics to contemporary masterpieces
-                    </p>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
                     {% for category in categories %}
                     <a href="{% url 'main:catalog' category.slug %}" 
-                       class="book-card block p-8 border border-gray-200 rounded-xl hover:border-gray-300 transition-all duration-300 text-center group">
-                        <div class="w-20 h-20 mx-auto mb-6 rounded-full bookish-bg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                            <i class="fas fa-book text-3xl accent-color"></i>
-                        </div>
-                        <h3 class="text-xl font-bold serif-font text-gray-900 mb-2">{{ category.name }}</h3>
-                        <p class="text-gray-600">{{ category.book_count }} titles available</p>
+                       hx-get="{% url 'main:catalog' category.slug %}" 
+                       hx-target="#main-content" 
+                       hx-push-url="true"
+                       class="block p-8 border border-gray-200 hover:border-gray-300 transition-colors">
+                        <h3 class="text-xl font-bold">{{ category.name|upper }}</h3>
                     </a>
-                    {% endfor %}
+                    {% endfor %}    
                 </div>
             </div>
-        </section>
-        
-        <!-- Featured Books Section -->
-        <section class="mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16">
-            <div class="max-w-6xl mx-auto">
-                <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-2xl font-bold text-gray-900 serif-font">Featured Books</h3>
-                    <a href="#" class="text-sm font-medium accent-color hover:underline">View All</a>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    <!-- Sample featured book cards -->
-                    {% for i in "12345" %}
-                    <div class="book-card rounded-lg overflow-hidden border border-gray-200 p-4">
-                        <div class="aspect-[3/4] bg-gray-100 rounded mb-4 flex items-center justify-center bookish-bg">
-                            <i class="fas fa-book-open text-4xl text-gray-400"></i>
-                        </div>
-                        <h4 class="font-bold text-sm mb-1 text-gray-900">Book Title {{ i }}</h4>
-                        <p class="text-xs text-gray-600 mb-3">Author Name</p>
-                        <div class="flex justify-between items-center">
-                            <span class="price-tag">$24.99</span>
-                            <button class="text-xs accent-color hover:underline font-medium">Details</button>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
+        </main>
         {% endblock %}
-    </main>
-
-    <!-- Footer -->
-    <footer class="bookish-bg border-t border-gray-200">
-        <div class="mx-auto px-4 sm:px-6 lg:px-8 py-12 max-w-6xl">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <h4 class="font-bold text-lg mb-4 serif-font accent-color">LIVRES NOBLES</h4>
-                    <p class="text-sm text-gray-700">
-                        Your destination for fine literature and rare books since 1995.
-                    </p>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg mb-4 text-gray-900">Shop</h4>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="#" class="text-gray-700 hover:underline">All Categories</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">Bestsellers</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">New Releases</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">Gift Cards</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg mb-4 text-gray-900">Help</h4>
-                    <ul class="space-y-2 text-sm">
-                        <li><a href="#" class="text-gray-700 hover:underline">Shipping Info</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">Returns</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">Contact Us</a></li>
-                        <li><a href="#" class="text-gray-700 hover:underline">Privacy Policy</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-bold text-lg mb-4 text-gray-900">Newsletter</h4>
-                    <p class="text-sm text-gray-700 mb-3">Subscribe for updates and exclusive offers</p>
-                    <div class="flex">
-                        <input type="email" placeholder="Your email" class="px-3 py-2 border border-gray-300 rounded-l text-sm w-full focus:outline-none focus:ring-1 focus:ring-accent-color">
-                        <button class="accent-bg text-white px-4 py-2 rounded-r text-sm font-medium hover:bg-brown-700 transition-colors">Join</button>
-                    </div>
-                </div>
-            </div>
-            <div class="border-t border-gray-300 mt-8 pt-8 text-center text-sm text-gray-600">
-                <p>&copy; 2023 Livres Nobles Bookstore. All rights reserved.</p>
-            </div>
-        </div>
-    </footer>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -417,9 +273,16 @@
                 document.body.style.overflow = '';
             }
     
-            if (menuToggle) menuToggle.addEventListener('click', openMobileMenu);
-            if (closeMenu) closeMenu.addEventListener('click', closeMobileMenu);
-            if (overlay) overlay.addEventListener('click', closeMobileMenu);
+            menuToggle.addEventListener('click', openMobileMenu);
+            closeMenu.addEventListener('click', closeMobileMenu);
+            overlay.addEventListener('click', closeMobileMenu);
+    
+            // Close mobile menu after navigation
+            document.addEventListener('htmx:afterRequest', function() {
+                closeMobileMenu();
+            });
+    
+        
     
             // Close mobile menu on window resize
             window.addEventListener('resize', function() {
@@ -427,7 +290,43 @@
                     closeMobileMenu();
                 }
             });
+    
+            // Update active navigation links after HTMX requests
+            document.addEventListener('htmx:afterSettle', function() {
+                updateActiveNavLinks();
+            });
+    
+            function updateActiveNavLinks() {
+                const currentPath = window.location.pathname;
+                const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
+                
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === currentPath) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+            
+            // Listen for cart updates
+            document.addEventListener('cartUpdated', function(e) {
+                if (e.detail && e.detail.total_items !== undefined) {
+                    updateHeaderCartCount(e.detail.total_items);
+                }
+            });
         });
+        
+        // Global function to update cart count
+        window.updateHeaderCartCount = function(count) {
+            const desktopCart = document.getElementById('desktopCart');
+            const mobileCart = document.getElementById('mobileCart');
+            const mobileCartHeader = document.getElementById('mobileCartHeader');
+            const cartText = `CART (${count})`;
+            
+            if (desktopCart) desktopCart.textContent = cartText;
+            if (mobileCart) mobileCart.textContent = cartText;
+            if (mobileCartHeader) mobileCartHeader.textContent = cartText;
+        };
     </script>
 </body>
 </html>

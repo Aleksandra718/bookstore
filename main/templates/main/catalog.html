@@ -1,311 +1,90 @@
 {% block content %}
-<div class="bg-gray-50 min-h-screen">
-    <!-- Page Header - более компактный для каталога -->
-    <div class="bg-white border-b border-gray-200">
-        <div class="mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                <div>
-                    <h1 class="text-xl font-semibold text-gray-900">
-                        {% if current_category %}
-                            {{ current_category.name }}
-                        {% else %}
-                            All Books
-                        {% endif %}
-                    </h1>
-                    <p class="text-sm text-gray-600 mt-1">{{ products.paginator.count }} books found</p>
-                </div>
-                
-                <!-- View Toggle -->
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 text-sm text-gray-600">
-                        <span>View:</span>
-                        <div class="flex border border-gray-300 rounded-lg overflow-hidden">
-                            <button class="px-3 py-2 bg-white border-r border-gray-300 hover:bg-gray-50 transition-colors">
-                                <i class="fas fa-th"></i>
-                            </button>
-                            <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
-                                <i class="fas fa-list"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb and Filters -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 space-y-4 sm:space-y-0">
+        <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 uppercase">
+            {% if current_category %}
+                {{ current_category|upper }} > NEW ARRIVALS
+            {% else %}
+                ALL PRODUCTS
+            {% endif %}
+        </h2>
+        <button class="bg-black text-white px-4 py-2 text-sm font-medium uppercase hover:bg-gray-800 transition-colors w-full sm:w-auto" 
+                hx-get="{% if current_category %}{% url 'main:catalog' current_category %}{% else %}{% url 'main:catalog_all' %}{% endif %}?show_filters=true&color={{ filter_params.color|urlencode }}&min_price={{ filter_params.min_price|urlencode }}&max_price={{ filter_params.max_price|urlencode }}&size={{ filter_params.size|urlencode }}" 
+                hx-target="#filter-modal-content"
+                hx-swap="innerHTML"
+                hx-on::after-request="document.getElementById('filter-modal').classList.remove('hidden')">
+            FILTERS
+        </button>
     </div>
 
-    <div class="mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col lg:flex-row gap-6">
-            <!-- Filters Sidebar - более компактный -->
-            <div class="lg:w-64 flex-shrink-0">
-                <!-- Mobile Filter Header -->
-                <div class="lg:hidden bg-white border border-gray-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-center justify-between">
-                        <h3 class="font-semibold text-gray-900">Filters</h3>
-                        <button class="text-sm text-brown-600 hover:text-brown-700">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
+    <!-- Filter Modal Container -->
+    <div id="filter-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div id="filter-modal-content" class="bg-white rounded-none max-w-md w-full"></div>
+    </div>
 
-                <!-- Desktop Filters -->
-                <div class="hidden lg:block space-y-4">
-                    <!-- Categories -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Categories</h3>
-                        <div class="space-y-1">
-                            <a href="{% url 'main:catalog_all' %}" 
-                               class="flex items-center justify-between py-2 px-2 rounded text-sm {% if not current_category %}bg-brown-50 text-brown-700 font-medium{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
-                                <span>All Categories</span>
-                                <span class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{% if total_products %}{{ total_products }}{% endif %}</span>
-                            </a>
-                            {% for category in categories %}
-                            <a href="{% url 'main:catalog' category.slug %}" 
-                               class="flex items-center justify-between py-2 px-2 rounded text-sm {% if current_category.slug == category.slug %}bg-brown-50 text-brown-700 font-medium{% else %}text-gray-700 hover:bg-gray-50{% endif %}">
-                                <span>{{ category.name }}</span>
-                                <span class="text-xs bg-gray-100 px-1.5 py-0.5 rounded">{{ category.product_count }}</span>
-                            </a>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Price Filter -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Price Range</h3>
-                        <div class="space-y-3">
-                            <div class="flex justify-between text-xs text-gray-600">
-                                <span>$0</span>
-                                <span>$100+</span>
-                            </div>
-                            <input type="range" min="0" max="100" value="50" class="w-full h-1 bg-gray-200 rounded slider">
-                            <div class="flex justify-between text-xs font-medium">
-                                <span>$25</span>
-                                <span>$75</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Format -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Format</h3>
-                        <div class="space-y-2">
-                            {% for format in formats %}
-                            <label class="flex items-center text-sm text-gray-700 cursor-pointer">
-                                <input type="checkbox" class="rounded border-gray-300 text-brown-600 focus:ring-brown-500">
-                                <span class="ml-2">{{ format.name }}</span>
-                                <span class="ml-auto text-xs text-gray-500">({{ format.count }})</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Rating -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Rating</h3>
-                        <div class="space-y-2">
-                            {% for i in "54321" %}
-                            <label class="flex items-center text-sm cursor-pointer">
-                                <input type="checkbox" class="rounded border-gray-300 text-brown-600 focus:ring-brown-500">
-                                <span class="ml-2 flex items-center">
-                                    {% for star in "12345" %}
-                                        {% if forloop.counter <= forloop.parentloop.counter %}
-                                            <i class="fas fa-star text-yellow-400 text-xs mr-0.5"></i>
-                                        {% else %}
-                                            <i class="far fa-star text-yellow-400 text-xs mr-0.5"></i>
-                                        {% endif %}
-                                    {% endfor %}
-                                    <span class="ml-1 text-gray-600">& up</span>
-                                </span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
-
-                    <!-- Availability -->
-                    <div class="bg-white border border-gray-200 rounded-lg p-4">
-                        <h3 class="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Availability</h3>
-                        <label class="flex items-center text-sm text-gray-700 cursor-pointer">
-                            <input type="checkbox" class="rounded border-gray-300 text-brown-600 focus:ring-brown-500">
-                            <span class="ml-2">In Stock Only</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Main Content Area -->
-            <div class="flex-1">
-                <!-- Toolbar with Sorting and Active Filters -->
-                <div class="bg-white border border-gray-200 rounded-lg p-4 mb-6">
-                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                        <!-- Active Filters -->
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="text-sm text-gray-600">Filters:</span>
-                            <span class="bg-brown-100 text-brown-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-                                Fiction <button class="hover:text-brown-900"><i class="fas fa-times text-xs"></i></button>
-                            </span>
-                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs flex items-center gap-1">
-                                $25-75 <button class="hover:text-gray-900"><i class="fas fa-times text-xs"></i></button>
-                            </span>
-                            <button class="text-xs text-brown-600 hover:text-brown-700 font-medium">
-                                Clear all
-                            </button>
-                        </div>
-
-                        <!-- Sort and Results Count -->
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm text-gray-600 hidden sm:block">
-                                {{ products.start_index }}-{{ products.end_index }} of {{ products.paginator.count }}
-                            </span>
-                            <div class="relative">
-                                <select class="text-sm border border-gray-300 rounded px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-brown-500 focus:border-brown-500 appearance-none pr-8">
-                                    <option>Sort by: Featured</option>
-                                    <option>Newest First</option>
-                                    <option>Price: Low to High</option>
-                                    <option>Price: High to Low</option>
-                                    <option>Highest Rated</option>
-                                </select>
-                                <i class="fas fa-chevron-down absolute right-2 top-2 text-xs text-gray-400 pointer-events-none"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Products Grid - более плотный -->
-                {% if products %}
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                    {% for product in products %}
-                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200">
-                        <div class="aspect-[3/4] bg-gray-100 relative overflow-hidden">
-                            {% if product.image %}
-                            <img src="{{ product.image.url }}" 
-                                 alt="{{ product.title }}" 
-                                 class="w-full h-full object-cover hover:scale-105 transition-transform duration-300">
-                            {% else %}
-                            <div class="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                                <i class="fas fa-book text-gray-400 text-2xl"></i>
-                            </div>
-                            {% endif %}
-                            
-                            <!-- Quick Actions -->
-                            <div class="absolute top-2 right-2 flex flex-col gap-1 opacity-0 hover:opacity-100 transition-opacity duration-200">
-                                <button class="bg-white/90 p-1.5 rounded text-xs hover:text-red-500 transition-colors" title="Add to Wishlist">
-                                    <i class="fas fa-heart"></i>
-                                </button>
-                                <button class="bg-white/90 p-1.5 rounded text-xs hover:text-brown-600 transition-colors" title="Quick View">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Product Info - компактный -->
-                        <div class="p-3">
-                            <h3 class="font-medium text-gray-900 text-sm mb-1 line-clamp-2 hover:text-brown-600 transition-colors">
-                                <a href="{% url 'main:product_detail' product.slug %}">{{ product.title }}</a>
-                            </h3>
-                            <p class="text-xs text-gray-600 mb-2">{{ product.author }}</p>
-                            
-                            <!-- Rating -->
-                            <div class="flex items-center gap-1 mb-2">
-                                <div class="flex items-center">
-                                    {% for i in "12345" %}
-                                        <i class="fas fa-star text-yellow-400 text-xs"></i>
-                                    {% endfor %}
-                                </div>
-                                <span class="text-xs text-gray-500">({{ product.review_count }})</span>
-                            </div>
-                            
-                            <!-- Price and Add to Cart -->
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-1">
-                                    <span class="font-semibold text-gray-900">${{ product.price }}</span>
-                                    {% if product.original_price %}
-                                    <span class="text-xs text-gray-500 line-through">${{ product.original_price }}</span>
-                                    {% endif %}
-                                </div>
-                                <button class="bg-brown-600 text-white p-1.5 rounded text-xs hover:bg-brown-700 transition-colors" title="Add to Cart">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-
-                <!-- Pagination - компактная -->
-                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-8 pt-6 border-t border-gray-200">
-                    <div class="text-sm text-gray-600">
-                        Showing {{ products.start_index }}-{{ products.end_index }} of {{ products.paginator.count }} books
-                    </div>
-                    
-                    <div class="flex items-center gap-1">
-                        {% if products.has_previous %}
-                        <a href="?page={{ products.previous_page_number }}" class="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors">
-                            <i class="fas fa-chevron-left mr-1"></i>Prev
-                        </a>
-                        {% endif %}
-                        
-                        {% for i in products.paginator.page_range %}
-                            {% if products.number == i %}
-                            <span class="px-3 py-1.5 bg-brown-600 text-white rounded text-sm font-medium">{{ i }}</span>
-                            {% else %}
-                            <a href="?page={{ i }}" class="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors">{{ i }}</a>
-                            {% endif %}
-                        {% endfor %}
-                        
-                        {% if products.has_next %}
-                        <a href="?page={{ products.next_page_number }}" class="px-3 py-1.5 border border-gray-300 rounded text-sm hover:bg-gray-50 transition-colors">
-                            Next<i class="fas fa-chevron-right ml-1"></i>
-                        </a>
-                        {% endif %}
-                    </div>
-                </div>
-
+    <!-- Product Grid -->
+    {% if products %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-12">
+        {% for product in products %}
+        <div class="product-card group cursor-pointer" 
+             hx-get="{% url 'main:product_detail' product.slug %}"
+             hx-target="#main-content"
+             hx-push-url="true">
+            <div class="aspect-square overflow-hidden bg-gray-100 mb-4">
+                {% if product.main_image %}
+                    <img src="{{ product.main_image.url }}" 
+                         alt="{{ product.name }}" 
+                         class="product-image w-full h-full object-cover">
                 {% else %}
-                <!-- Empty State -->
-                <div class="text-center py-12 bg-white border border-gray-200 rounded-lg">
-                    <i class="fas fa-search text-4xl text-gray-300 mb-4"></i>
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No books found</h3>
-                    <p class="text-gray-600 mb-6 max-w-sm mx-auto text-sm">
-                        Try adjusting your search or filter criteria to find what you're looking for.
-                    </p>
-                    <div class="flex gap-3 justify-center">
-                        <button class="px-4 py-2 border border-gray-300 rounded text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                            Clear Filters
-                        </button>
-                        <a href="{% url 'main:catalog_all' %}" class="px-4 py-2 bg-brown-600 text-white rounded text-sm hover:bg-brown-700 transition-colors">
-                            Browse All
-                        </a>
+                    <div class="product-image w-full h-full bg-gray-200 flex items-center justify-center">
+                        <span class="text-gray-400 text-sm">No Image</span>
                     </div>
-                </div>
                 {% endif %}
             </div>
+            <div class="text-center">
+                <h3 class="text-sm font-medium text-gray-900 mb-1 uppercase">{{ product.name }}</h3>
+                <p class="text-sm text-gray-600 mb-1 uppercase">{{ product.color }}</p>
+                <p class="text-sm font-medium">${{ product.price }}</p>
+            </div>
         </div>
+        {% endfor %}
     </div>
-</div>
+    {% else %}
+    <div class="text-center py-20">
+        <h3 class="text-2xl font-bold text-gray-900 mb-4 uppercase">No products found</h3>
+        <p class="text-gray-600 mb-8">
+            {% if current_category %}
+                No products available in this category yet.
+            {% else %}
+                No products available at the moment.
+            {% endif %}
+        </p>
+        <a href="{% url 'main:index' %}" 
+           hx-get="{% url 'main:index' %}" 
+           hx-target="#main-content" 
+           hx-push-url="true"
+           class="bg-black text-white px-6 py-3 text-sm font-medium uppercase hover:bg-gray-800 transition-colors">
+            Back to Home
+        </a>
+    </div>
+    {% endif %}
+</main>
 
-<style>
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-    
-    .slider {
-        -webkit-appearance: none;
-        background: #e5e7eb;
-        height: 4px;
-        border-radius: 2px;
-    }
-    
-    .slider::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 16px;
-        height: 16px;
-        background: #8B4513;
-        border-radius: 50%;
-        cursor: pointer;
-        border: 2px solid white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-</style>
+<script>
+    // Product card hover and click functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.transition = 'transform 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
 {% endblock %}
