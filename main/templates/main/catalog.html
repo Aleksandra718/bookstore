@@ -24,16 +24,16 @@
                             All Books
                         {% endif %}
                     </h1>
-                    <p class="text-gray-600 mt-2">Browse our complete collection</p>
+                    <p class="text-gray-600 mt-2">Discover your next favorite read</p>
                 </div>
 
                 <div class="flex items-center space-x-4 mt-4 lg:mt-0">
                     <span class="text-sm text-gray-600">{{ products.paginator.count }} results</span>
                     <div class="flex border border-gray-300 rounded-lg overflow-hidden">
-                        <button class="px-3 py-2 bg-white border-r border-gray-300 text-sm">
+                        <button class="px-3 py-2 bg-white border-r border-gray-300 text-sm hover:bg-gray-50 transition-colors">
                             <i class="fas fa-th"></i>
                         </button>
-                        <button class="px-3 py-2 bg-gray-100 text-sm">
+                        <button class="px-3 py-2 bg-gray-100 text-sm hover:bg-gray-200 transition-colors">
                             <i class="fas fa-list"></i>
                         </button>
                     </div>
@@ -47,13 +47,22 @@
             <!-- Filters Sidebar -->
             <div class="lg:w-80 flex-shrink-0">
                 <!-- Mobile Filter Button -->
-                <button class="lg:hidden w-full bg-accent-color text-white py-3 rounded-lg font-medium mb-4 flex items-center justify-center">
+                <button class="lg:hidden w-full bg-accent-color text-white py-3 rounded-lg font-medium mb-4 flex items-center justify-center hover:bg-brown-700 transition-colors">
                     <i class="fas fa-filter mr-2"></i>
                     Show Filters
                 </button>
 
                 <!-- Desktop Filters -->
                 <div class="hidden lg:block space-y-6">
+                    <!-- Search -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 class="font-bold text-gray-900 mb-4">Search Books</h3>
+                        <div class="relative">
+                            <input type="text" placeholder="Title, author, ISBN..." class="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-accent-color focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+
                     <!-- Categories -->
                     <div class="bg-white rounded-lg border border-gray-200 p-6">
                         <h3 class="font-bold text-gray-900 mb-4 flex items-center justify-between">
@@ -61,6 +70,14 @@
                             <span class="text-sm text-gray-500">{{ categories.count }}</span>
                         </h3>
                         <div class="space-y-2">
+                            <a href="{% url 'main:catalog_all' %}" 
+                               class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 {% if not current_category %}bg-accent-color text-white hover:bg-brown-700{% endif %}">
+                                <span class="flex items-center">
+                                    <i class="fas fa-layer-group mr-3 text-sm"></i>
+                                    All Categories
+                                </span>
+                                <span class="text-sm opacity-75">({{ total_products }})</span>
+                            </a>
                             {% for category in categories %}
                             <a href="{% url 'main:catalog' category.slug %}" 
                                class="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-gray-50 {% if current_category.slug == category.slug %}bg-accent-color text-white hover:bg-brown-700{% endif %}">
@@ -82,7 +99,7 @@
                                 <span class="text-sm text-gray-600">$0</span>
                                 <span class="text-sm text-gray-600">$100+</span>
                             </div>
-                            <input type="range" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <input type="range" min="0" max="100" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider">
                             <div class="flex justify-between text-sm font-medium">
                                 <span>$25</span>
                                 <span>$75</span>
@@ -94,20 +111,25 @@
                     <div class="bg-white rounded-lg border border-gray-200 p-6">
                         <h3 class="font-bold text-gray-900 mb-4">Book Format</h3>
                         <div class="space-y-3">
-                            <label class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
                                 <span class="ml-3 text-sm text-gray-700">Hardcover</span>
                                 <span class="ml-auto text-sm text-gray-500">(256)</span>
                             </label>
-                            <label class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
                                 <span class="ml-3 text-sm text-gray-700">Paperback</span>
                                 <span class="ml-auto text-sm text-gray-500">(189)</span>
                             </label>
-                            <label class="flex items-center">
+                            <label class="flex items-center cursor-pointer">
                                 <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
                                 <span class="ml-3 text-sm text-gray-700">E-book</span>
                                 <span class="ml-auto text-sm text-gray-500">(342)</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                                <span class="ml-3 text-sm text-gray-700">Audiobook</span>
+                                <span class="ml-auto text-sm text-gray-500">(124)</span>
                             </label>
                         </div>
                     </div>
@@ -134,12 +156,39 @@
                         </div>
                     </div>
 
+                    <!-- Publication Year -->
+                    <div class="bg-white rounded-lg border border-gray-200 p-6">
+                        <h3 class="font-bold text-gray-900 mb-4">Publication Year</h3>
+                        <div class="space-y-3">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                                <span class="ml-3 text-sm text-gray-700">2020 - 2023</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                                <span class="ml-3 text-sm text-gray-700">2010 - 2019</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                                <span class="ml-3 text-sm text-gray-700">2000 - 2009</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                                <span class="ml-3 text-sm text-gray-700">Before 2000</span>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Availability -->
                     <div class="bg-white rounded-lg border border-gray-200 p-6">
                         <h3 class="font-bold text-gray-900 mb-4">Availability</h3>
-                        <label class="flex items-center">
+                        <label class="flex items-center cursor-pointer">
                             <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
                             <span class="ml-3 text-sm text-gray-700">In Stock Only</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer mt-2">
+                            <input type="checkbox" class="rounded border-gray-300 text-accent-color focus:ring-accent-color">
+                            <span class="ml-3 text-sm text-gray-700">Pre-order</span>
                         </label>
                     </div>
                 </div>
@@ -151,21 +200,39 @@
                 <div class="bg-white rounded-lg border border-gray-200 p-4 mb-6">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
                         <div class="flex items-center space-x-4">
-                            <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-color">
-                                <option>Sort by: Featured</option>
-                                <option>Sort by: Newest</option>
-                                <option>Sort by: Price: Low to High</option>
-                                <option>Sort by: Price: High to Low</option>
-                                <option>Sort by: Highest Rated</option>
-                            </select>
-                            <span class="text-sm text-gray-600 hidden sm:block">Showing 1-12 of {{ products.paginator.count }} results</span>
+                            <div class="relative">
+                                <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-color appearance-none pr-8">
+                                    <option>Sort by: Featured</option>
+                                    <option>Sort by: Newest</option>
+                                    <option>Sort by: Price: Low to High</option>
+                                    <option>Sort by: Price: High to Low</option>
+                                    <option>Sort by: Highest Rated</option>
+                                    <option>Sort by: Bestsellers</option>
+                                </select>
+                                <i class="fas fa-chevron-down absolute right-3 top-3 text-gray-400 pointer-events-none"></i>
+                            </div>
+                            <span class="text-sm text-gray-600 hidden sm:block">Showing {{ products.start_index }}-{{ products.end_index }} of {{ products.paginator.count }} results</span>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50">
-                                <i class="fas fa-sync-alt mr-2"></i>Reset
+                            <button class="px-4 py-2 border border-gray-300 rounded-lg text-sm hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Reset Filters
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Active Filters -->
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <span class="bg-accent-color text-white px-3 py-1 rounded-full text-sm flex items-center">
+                        Fiction <button class="ml-2 hover:text-gray-200"><i class="fas fa-times"></i></button>
+                    </span>
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
+                        $25 - $75 <button class="ml-2 hover:text-gray-500"><i class="fas fa-times"></i></button>
+                    </span>
+                    <span class="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm flex items-center">
+                        Hardcover <button class="ml-2 hover:text-gray-500"><i class="fas fa-times"></i></button>
+                    </span>
+                    <button class="text-sm text-accent-color hover:text-brown-700 font-medium">Clear all</button>
                 </div>
 
                 <!-- Products Grid -->
@@ -187,11 +254,14 @@
                                 
                                 <!-- Quick Actions -->
                                 <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                    <button class="bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors" title="Add to Wishlist">
+                                    <button class="bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors hover:text-red-500" title="Add to Wishlist">
                                         <i class="fas fa-heart text-gray-700 text-sm"></i>
                                     </button>
                                     <button class="bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors" title="Quick View">
                                         <i class="fas fa-eye text-gray-700 text-sm"></i>
+                                    </button>
+                                    <button class="bg-white/90 p-2 rounded-full shadow-lg hover:bg-white transition-colors" title="Compare">
+                                        <i class="fas fa-exchange-alt text-gray-700 text-sm"></i>
                                     </button>
                                 </div>
                                 
@@ -201,6 +271,15 @@
                                         Hardcover
                                     </span>
                                 </div>
+
+                                <!-- Sale Badge -->
+                                {% if product.original_price %}
+                                <div class="absolute bottom-4 left-4">
+                                    <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                        Save {{ product.discount_percentage }}%
+                                    </span>
+                                </div>
+                                {% endif %}
                             </div>
 
                             <!-- Book Info -->
@@ -208,12 +287,12 @@
                                 <div class="flex items-start justify-between mb-3">
                                     <div class="flex-1">
                                         <h3 class="font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-accent-color transition-colors">
-                                            {{ product.title }}
+                                            <a href="{% url 'main:product_detail' product.slug %}">{{ product.title }}</a>
                                         </h3>
                                         <p class="text-sm text-gray-600 mb-3">{{ product.author }}</p>
                                     </div>
-                                    <button class="ml-4 bg-accent-color text-white p-3 rounded-lg hover:bg-brown-700 transition-colors flex-shrink-0">
-                                        <i class="fas fa-shopping-cart"></i>
+                                    <button class="ml-4 bg-accent-color text-white p-3 rounded-lg hover:bg-brown-700 transition-colors flex-shrink-0 group/cart">
+                                        <i class="fas fa-shopping-cart group-hover/cart:scale-110 transition-transform"></i>
                                     </button>
                                 </div>
 
@@ -221,7 +300,11 @@
                                 <div class="flex items-center mb-4">
                                     <div class="flex items-center">
                                         {% for i in "12345" %}
-                                        <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                            {% if forloop.counter <= product.rating %}
+                                                <i class="fas fa-star text-yellow-400 text-sm"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-yellow-400 text-sm"></i>
+                                            {% endif %}
                                         {% endfor %}
                                     </div>
                                     <span class="text-sm text-gray-500 ml-2">({{ product.review_count }})</span>
@@ -235,9 +318,9 @@
                                         <span class="text-sm text-gray-500 line-through">${{ product.original_price }}</span>
                                         {% endif %}
                                     </div>
-                                    <span class="flex items-center text-sm text-green-600">
-                                        <i class="fas fa-check-circle mr-1"></i>
-                                        In Stock
+                                    <span class="flex items-center text-sm {% if product.in_stock %}text-green-600{% else %}text-red-600{% endif %}">
+                                        <i class="fas {% if product.in_stock %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-1"></i>
+                                        {% if product.in_stock %}In Stock{% else %}Out of Stock{% endif %}
                                     </span>
                                 </div>
 
@@ -247,7 +330,15 @@
                                         <span>Published: {{ product.publication_year }}</span>
                                         <span>{{ product.pages }} pages</span>
                                     </div>
+                                    <div class="mt-2 text-xs text-gray-500">
+                                        <span>ISBN: {{ product.isbn }}</span>
+                                    </div>
                                 </div>
+
+                                <!-- Quick Add Button (Mobile) -->
+                                <button class="w-full mt-4 bg-gray-100 text-gray-700 py-2 rounded-lg font-medium hover:bg-gray-200 transition-colors lg:hidden">
+                                    Add to Cart
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -255,18 +346,39 @@
                 </div>
 
                 <!-- Pagination -->
-                <div class="flex justify-center items-center space-x-2 mt-12">
-                    <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                        <i class="fas fa-chevron-left mr-2"></i>Previous
-                    </button>
-                    <button class="w-10 h-10 bg-accent-color text-white rounded-lg text-sm font-medium">1</button>
-                    <button class="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">2</button>
-                    <button class="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">3</button>
-                    <span class="px-2 text-gray-500">...</span>
-                    <button class="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium">8</button>
-                    <button class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-                        Next<i class="fas fa-chevron-right ml-2"></i>
-                    </button>
+                <div class="flex flex-col sm:flex-row justify-between items-center mt-12 space-y-4 sm:space-y-0">
+                    <div class="text-sm text-gray-600">
+                        Showing {{ products.start_index }}-{{ products.end_index }} of {{ products.paginator.count }} results
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        {% if products.has_previous %}
+                        <a href="?page={{ products.previous_page_number }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm flex items-center transition-colors">
+                            <i class="fas fa-chevron-left mr-2"></i>Previous
+                        </a>
+                        {% else %}
+                        <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm flex items-center text-gray-400 cursor-not-allowed">
+                            <i class="fas fa-chevron-left mr-2"></i>Previous
+                        </span>
+                        {% endif %}
+                        
+                        {% for i in products.paginator.page_range %}
+                            {% if products.number == i %}
+                            <span class="w-10 h-10 bg-accent-color text-white rounded-lg text-sm font-medium flex items-center justify-center">{{ i }}</span>
+                            {% else %}
+                            <a href="?page={{ i }}" class="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm font-medium flex items-center justify-center transition-colors">{{ i }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if products.has_next %}
+                        <a href="?page={{ products.next_page_number }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-sm flex items-center transition-colors">
+                            Next<i class="fas fa-chevron-right ml-2"></i>
+                        </a>
+                        {% else %}
+                        <span class="px-4 py-2 border border-gray-300 rounded-lg text-sm flex items-center text-gray-400 cursor-not-allowed">
+                            Next<i class="fas fa-chevron-right ml-2"></i>
+                        </span>
+                        {% endif %}
+                    </div>
                 </div>
 
                 {% else %}
@@ -302,20 +414,31 @@
         overflow: hidden;
     }
     
-    input[type="range"] {
+    .slider {
         -webkit-appearance: none;
         background: #e5e7eb;
         height: 6px;
         border-radius: 3px;
     }
     
-    input[type="range"]::-webkit-slider-thumb {
+    .slider::-webkit-slider-thumb {
         -webkit-appearance: none;
         width: 18px;
         height: 18px;
         background: #8B4513;
         border-radius: 50%;
         cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .slider::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        background: #8B4513;
+        border-radius: 50%;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 </style>
 {% endblock %}
